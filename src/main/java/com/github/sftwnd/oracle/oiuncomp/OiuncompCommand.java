@@ -14,6 +14,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
@@ -58,6 +60,8 @@ public final class OiuncompCommand {
      *
      * @param args the command-line arguments
      */
+    // The standard streams are the interface of the utility, not a log (java:S106)
+    @SuppressWarnings("java:S106")
     public static void main(String[] args) {
         int status = new OiuncompCommand(System.out, System.err).run(args);
         if (status != SUCCESS) {
@@ -184,38 +188,56 @@ public final class OiuncompCommand {
         /** @throws IllegalArgumentException invalid arguments; the message explains why */
         static Options parse(String... args) {
             Options options = new Options();
-            boolean optionsEnded = false;
-            for (int i = 0; i < args.length; i++) {
-                String arg = args[i];
-                if (optionsEnded || !arg.startsWith("-") || arg.equals("-")) {
+            Iterator<String> remaining = Arrays.asList(args).iterator();
+            while (remaining.hasNext()) {
+                String arg = remaining.next();
+                if (!arg.startsWith("-") || arg.equals("-")) {
                     options.files.add(arg);
                 } else if (arg.equals("--")) {
-                    optionsEnded = true;
-                } else if (arg.equals("-c")) {
-                    options.toStandardOutput = true;
-                } else if (arg.equals("-f")) {
-                    options.overwrite = true;
-                } else if (arg.equals("-h") || arg.equals("--help")) {
-                    options.help = true;
-                } else if (arg.equals("-d")) {
-                    if (++i == args.length) {
-                        throw new IllegalArgumentException("option -d requires a directory");
-                    }
-                    options.directory = directory(args[i]);
+                    remaining.forEachRemaining(options.files::add);
                 } else {
-                    throw new IllegalArgumentException("unknown option " + arg);
+                    options.apply(arg, remaining);
                 }
             }
-            if (options.help) {
-                return options;
+            options.validate();
+            return options;
+        }
+
+        /** Applies an option; {@code -d} takes its directory from the remaining arguments. */
+        private void apply(String option, Iterator<String> remaining) {
+            switch (option) {
+                case "-c":
+                    toStandardOutput = true;
+                    break;
+                case "-f":
+                    overwrite = true;
+                    break;
+                case "-h":
+                case "--help":
+                    help = true;
+                    break;
+                case "-d":
+                    if (!remaining.hasNext()) {
+                        throw new IllegalArgumentException("option -d requires a directory");
+                    }
+                    directory = directory(remaining.next());
+                    break;
+                default:
+                    throw new IllegalArgumentException("unknown option " + option);
             }
-            if (options.files.isEmpty()) {
+        }
+
+        /** The help needs no files, so the other options are not checked with it. */
+        private void validate() {
+            if (help) {
+                return;
+            }
+            if (files.isEmpty()) {
                 throw new IllegalArgumentException("no files to uncompress");
             }
-            if (options.toStandardOutput && options.directory != null) {
+            if (toStandardOutput && directory != null) {
                 throw new IllegalArgumentException("options -c and -d cannot be used together");
             }
-            return options;
         }
 
         private static Path directory(String name) {

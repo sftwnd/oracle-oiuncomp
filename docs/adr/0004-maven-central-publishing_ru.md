@@ -14,7 +14,7 @@ JAR — multi-release JAR с дескриптором модуля в `META-INF/
 
 ## Решение
 
-- Версии — `MAJOR.MINOR.PATCH`, версии разработки оканчиваются на `-SNAPSHOT`; первая — `1.0.0-SNAPSHOT`.
+- Версии — `MAJOR.MINOR.PATCH`, версии разработки оканчиваются на `-SNAPSHOT`; первый релиз — `1.0.0`.
 - В POM есть `url`, `licenses` (BSD-3-Clause), `developers` и `scm` (GitHub `sftwnd/oracle-oiuncomp`).
 - Публикуемые артефакты: JAR, `-sources.jar`, `-javadoc.jar`, дистрибутив `-bin.tar.gz` и `-bin.zip`, POM.
 - JAR исходников повторяет multi-release JAR. `maven-resources-plugin` копирует `src/main/java` в `target/sources`,

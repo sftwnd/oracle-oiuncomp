@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -60,7 +61,7 @@ class SampleFilesTest {
                 files.add(file);
             }
         }
-        Collections.sort(files);
+        files.sort(Comparator.naturalOrder());
         return files;
     }
 }

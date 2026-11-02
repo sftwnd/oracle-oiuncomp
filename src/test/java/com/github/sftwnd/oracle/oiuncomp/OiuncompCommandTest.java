@@ -104,9 +104,11 @@ class OiuncompCommandTest {
 
     @Test
     void argumentsAfterDoubleDashAreFiles() throws IOException {
-        compressed("-demo.sql_", DATA);
-        assertEquals(OiuncompCommand.SUCCESS,
-                run("-d", directory.toString(), "--", directory.resolve("-demo.sql_").toString()));
+        Path source = compressed("-demo.sql_", DATA);
+        // -c after -- is the name of a file, not the option: nothing goes to the standard output
+        assertEquals(OiuncompCommand.FAILURE, run("--", "-c", source.toString()));
+        assertTrue(err().contains("oiuncomp: -c: "), err());
+        assertEquals(0, out.size());
         assertArrayEquals(DATA, Files.readAllBytes(directory.resolve("-demo.sql")));
     }
 

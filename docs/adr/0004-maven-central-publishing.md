@@ -14,7 +14,7 @@ The JAR is a multi-release JAR with the module descriptor in `META-INF/versions/
 
 ## Decision
 
-- Versions are `MAJOR.MINOR.PATCH`, development versions end with `-SNAPSHOT`; the first one is `1.0.0-SNAPSHOT`.
+- Versions are `MAJOR.MINOR.PATCH`, development versions end with `-SNAPSHOT`; the first release is `1.0.0`.
 - The POM has `url`, `licenses` (BSD-3-Clause), `developers` and `scm` (GitHub `sftwnd/oracle-oiuncomp`).
 - Published artifacts: the JAR, `-sources.jar`, `-javadoc.jar`, the distribution `-bin.tar.gz` and `-bin.zip`, the
   POM.
