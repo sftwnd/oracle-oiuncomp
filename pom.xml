@@ -284,6 +284,10 @@ Export-Package: com.github.sftwnd.oracle.oiuncomp;version="${version;===;${Bundl
                     <!-- the release profile of the super POM is not used: useReleaseProfile (deprecated) is false by
                          default -->
                     <releaseProfiles>sign-artifacts</releaseProfiles>
+                    <!-- master keeps the last release: release:prepare commits the next snapshot version to the branch
+                         it runs on, so the commits stay local until develop takes that version and master returns
+                         to the tag of the release (ADR 0004) -->
+                    <pushChanges>false</pushChanges>
                 </configuration>
             </plugin>
             <plugin>
