@@ -26,6 +26,15 @@ JAR — multi-release JAR с дескриптором модуля в `META-INF/
 - Релиз выполняет `maven-release-plugin` (`release:prepare`, `release:perform`) с исполнителем `forked-path`.
   `release:prepare` записывает в `project.build.outputTimestamp` время релиза, ставит тег `oracle-oiuncomp-<версия>`
   и переходит к следующей snapshot-версии.
+- В `master` — последний релиз, в `develop` — следующая snapshot-версия. Плагин релиза не делает push
+  (`pushChanges` — `false`), а релиз выполняется на JDK 9+ так:
+  1. `develop` вливается в `master` через `git merge --no-ff`;
+  2. на `master`: `./mvnw -B release:prepare -DreleaseVersion=<версия> -DdevelopmentVersion=<следующая>-SNAPSHOT`,
+     два локальных коммита: релиз с тегом и следующая snapshot-версия;
+  3. `git switch develop` и `git merge --no-ff master`: `develop` получает следующую snapshot-версию;
+  4. `git switch master` и `git reset --hard oracle-oiuncomp-<версия>`: `master` возвращается на релиз;
+  5. `git push origin master develop oracle-oiuncomp-<версия>`;
+  6. `./mvnw -B release:perform` берёт тег с GitHub, собирает, подписывает и загружает его.
 - Профиль `sign-artifacts` включается плагином релиза (`releaseProfiles`) или `-DperformRelease=true`:
   - `maven-enforcer-plugin` требует JDK 9+;
   - `maven-gpg-plugin` подписывает все артефакты в фазе `verify` ключом `gpg.keyname` из `.mvn/settings.xml`;
@@ -50,6 +59,10 @@ JAR — multi-release JAR с дескриптором модуля в `META-INF/
 - Пароль в gpg-agent не хранится ни в файле, ни в окружении каждой сборки, как рекомендуют best practices
   `maven-gpg-plugin` 3.2. В пакетном режиме заблокированный ключ сразу даёт ошибку, а не зависает на запросе пароля.
 - Enforcer превращает молчаливую потерю дескриптора модуля в упавшую сборку.
+- `master` GitHub показывает и клонирует по умолчанию: с последним релизом в нём его исходники совпадают с
+  артефактами в Maven Central. Плагин релиза коммитит следующую snapshot-версию в ту ветку, где запущен, поэтому
+  `develop` забирает этот коммит до того, как `master` вернётся на тег, а без push плагина коммит не попадает в
+  `master` на GitHub.
 - Central Publisher Portal — поддерживаемый способ публикации в Maven Central, и его плагину не нужна настройка
   staging в POM.
 
@@ -61,6 +74,10 @@ JAR — multi-release JAR с дескриптором модуля в `META-INF/
   вариантом; по умолчанию секрет остаётся в gpg-agent.
 - **`maven-deploy-plugin` в OSSRH.** Сервис закрыт.
 - **JReleaser.** Ещё один инструмент со своей конфигурацией; для одного модуля хватает плагинов Maven.
+- **`gitflow-maven-plugin`.** Сам выполняет слияния релиза, но приносит свои соглашения о ветках и свои цели; три
+  команды Git вокруг `maven-release-plugin` дают тот же результат.
+- **Следующая snapshot-версия и в `master`.** Поведение плагина релиза по умолчанию: между релизами `master`
+  указывал бы на невыпущенную версию.
 - **Только GitHub Packages или GitHub Releases.** GitHub Packages требуют аутентификации даже для скачивания, и ни
   один из них не является репозиторием Maven или Gradle по умолчанию.
 

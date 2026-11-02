@@ -34,6 +34,7 @@ class PackagingIT {
     private static final Path JAR = Paths.get(System.getProperty("oiuncomp.jar"));
     private static final Path SOURCES = Paths.get(System.getProperty("oiuncomp.sources"));
     private static final String MODULE = System.getProperty("oiuncomp.module");
+    private static final String VERSION = System.getProperty("oiuncomp.version");
     private static final String PACKAGE = "com.github.sftwnd.oracle.oiuncomp";
     private static final String MAIN_CLASS = PACKAGE + ".OiuncompCommand";
     private static final boolean JAVA_9_PLUS = !System.getProperty("java.specification.version").startsWith("1.");
@@ -48,8 +49,11 @@ class PackagingIT {
             Attributes manifest = jar.getManifest().getMainAttributes();
             assertEquals("2", manifest.getValue("Bundle-ManifestVersion"));
             assertEquals(MODULE, manifest.getValue("Bundle-SymbolicName"));
-            assertTrue(manifest.getValue("Bundle-Version").startsWith("1.0.0"), manifest.getValue("Bundle-Version"));
-            assertEquals(PACKAGE + ";version=\"1.0.0\"", manifest.getValue("Export-Package"));
+            // A snapshot gets the qualifier SNAPSHOT (-snapshot of bnd), the package the version without it
+            String release = VERSION.replace("-SNAPSHOT", "");
+            assertEquals(VERSION.equals(release) ? release : release + ".SNAPSHOT",
+                    manifest.getValue("Bundle-Version"));
+            assertEquals(PACKAGE + ";version=\"" + release + "\"", manifest.getValue("Export-Package"));
             assertNull(manifest.getValue("Import-Package"), "only java.* is used");
             assertTrue(manifest.getValue("Require-Capability").contains("(&(osgi.ee=JavaSE)(version=1.8))"),
                     manifest.getValue("Require-Capability"));
