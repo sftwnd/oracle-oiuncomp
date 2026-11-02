@@ -249,6 +249,7 @@ Export-Package: com.github.sftwnd.oracle.oiuncomp;version="${version;===;${Bundl
                             ${project.build.directory}/${project.build.finalName}-sources.jar
                         </oiuncomp.sources>
                         <oiuncomp.module>${javaModuleName}</oiuncomp.module>
+                        <oiuncomp.version>${project.version}</oiuncomp.version>
                         <oiuncomp.dist>${project.build.directory}/${project.build.finalName}-bin</oiuncomp.dist>
                         <oiuncomp.dist.base>${project.build.finalName}</oiuncomp.dist.base>
                     </systemPropertyVariables>
