@@ -67,7 +67,8 @@ public final class OiuncompInputStream extends InputStream {
         ensureOpen();
         long skipped = 0;
         while (skipped < count && fill()) {
-            int step = (int) Math.min(count - skipped, limit - position);
+            int available = limit - position;
+            int step = (int) Math.min(count - skipped, available);
             position += step;
             skipped += step;
         }

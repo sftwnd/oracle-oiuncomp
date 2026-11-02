@@ -52,11 +52,11 @@ class OiuncompTest {
 
     @Test
     void argumentsAreRequired() {
+        InputStream input = new ByteArrayInputStream(new byte[] {14});
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
         assertThrows(NullPointerException.class, () -> Oiuncomp.uncompress(null));
-        assertThrows(NullPointerException.class,
-                () -> Oiuncomp.uncompress(null, new ByteArrayOutputStream()));
-        assertThrows(NullPointerException.class,
-                () -> Oiuncomp.uncompress(new ByteArrayInputStream(new byte[] {14}), null));
+        assertThrows(NullPointerException.class, () -> Oiuncomp.uncompress(null, output));
+        assertThrows(NullPointerException.class, () -> Oiuncomp.uncompress(input, null));
         assertThrows(NullPointerException.class, () -> Oiuncomp.isCompressed(null));
     }
 
