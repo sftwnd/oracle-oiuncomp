@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The distribution of the command-line utility. The jar has a fixed name in lib, so the launchers do not depend on
+     the version; the version is in the name of the archive and of its base directory. -->
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.2.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.2.0 https://maven.apache.org/xsd/assembly-2.2.0.xsd">
+    <id>bin</id>
+    <formats>
+        <!-- tar.gz keeps the executable mode of the launcher for any tar; zip keeps it only for some unzip tools -->
+        <format>tar.gz</format>
+        <format>zip</format>
+    </formats>
+    <fileSets>
+        <fileSet>
+            <directory>${project.basedir}/src/main/dist/bin</directory>
+            <outputDirectory>bin</outputDirectory>
+            <includes>
+                <include>oiuncomp</include>
+            </includes>
+            <fileMode>0755</fileMode>
+            <lineEnding>unix</lineEnding>
+        </fileSet>
+        <fileSet>
+            <directory>${project.basedir}/src/main/dist/bin</directory>
+            <outputDirectory>bin</outputDirectory>
+            <includes>
+                <include>oiuncomp.cmd</include>
+            </includes>
+            <fileMode>0644</fileMode>
+            <lineEnding>dos</lineEnding>
+        </fileSet>
+        <fileSet>
+            <directory>${project.basedir}</directory>
+            <includes>
+                <include>LICENSE</include>
+                <include>README.md</include>
+                <include>README_ru.md</include>
+            </includes>
+            <fileMode>0644</fileMode>
+        </fileSet>
+    </fileSets>
+    <files>
+        <file>
+            <source>${project.build.directory}/${project.build.finalName}.jar</source>
+            <outputDirectory>lib</outputDirectory>
+            <destName>oracle-oiuncomp.jar</destName>
+            <fileMode>0644</fileMode>
+        </file>
+    </files>
+</assembly>

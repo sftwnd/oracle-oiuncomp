@@ -1,0 +1,522 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.github.sftwnd</groupId>
+    <artifactId>oracle-oiuncomp</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <name>Oracle oiuncomp</name>
+    <description>Decompressor of files compressed by Oracle Installer (the oiuncomp utility of Oracle 7.3)</description>
+    <url>https://github.com/sftwnd/oracle-oiuncomp</url>
+
+    <licenses>
+        <license>
+            <name>3-Clause BSD License</name>
+            <url>https://opensource.org/licenses/BSD-3-Clause</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>ashindarev</id>
+            <name>Andrey Shindarev</name>
+            <email>ashindarev@gmail.com</email>
+            <timezone>Europe/Moscow</timezone>
+        </developer>
+    </developers>
+
+    <scm>
+        <url>https://github.com/sftwnd/oracle-oiuncomp</url>
+        <connection>scm:git:https://github.com/sftwnd/oracle-oiuncomp.git</connection>
+        <developerConnection>scm:git:git@github.com:sftwnd/oracle-oiuncomp.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <!-- the time of the entries of the jars, for reproducible builds: maven-release-plugin sets the time of the
+             release at release:prepare; without the property the super POM of Maven 3.10 sets 1980-02-01 -->
+        <project.build.outputTimestamp>2026-11-02T00:00:00Z</project.build.outputTimestamp>
+        <javaModuleName>com.github.sftwnd.oracle.oiuncomp</javaModuleName>
+        <!-- real compressed files for SampleFilesTest (a file or a directory), not part of the project; empty means
+             that the check is skipped: -Doiuncomp.samples=... -->
+        <oiuncomp.samples />
+
+        <!-- JUnit 6 requires Java 17, while the tests run on Java 8 as well -->
+        <junit.version>5.14.4</junit.version>
+        <!-- 3.11.0+: compileSourceRoots can be configured, for the module descriptor in src/main/java9 -->
+        <maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
+        <maven-surefire-plugin.version>3.6.0</maven-surefire-plugin.version>
+        <maven-failsafe-plugin.version>3.6.0</maven-failsafe-plugin.version>
+        <maven-jar-plugin.version>3.5.1</maven-jar-plugin.version>
+        <maven-assembly-plugin.version>3.8.0</maven-assembly-plugin.version>
+        <maven-deploy-plugin.version>3.2.0</maven-deploy-plugin.version>
+        <maven-enforcer-plugin.version>3.6.3</maven-enforcer-plugin.version>
+        <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
+        <maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
+        <maven-release-plugin.version>3.3.1</maven-release-plugin.version>
+        <maven-resources-plugin.version>3.5.0</maven-resources-plugin.version>
+        <maven-source-plugin.version>3.4.0</maven-source-plugin.version>
+        <!-- bnd 7 requires Java 17, while the build has to run on JDK 8 as well -->
+        <bnd-maven-plugin.version>6.4.0</bnd-maven-plugin.version>
+        <central-publishing-maven-plugin.version>0.12.0</central-publishing-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
+        <sonar-maven-plugin.version>5.8.0.7211</sonar-maven-plugin.version>
+        <!-- the sources jar is built by maven-jar-plugin (the execution attach-sources): maven-source-plugin, which the
+             release profile of the super POM of Maven 3.9 (-DperformRelease=true, for example with the Maven of an
+             IDE) uses as well, is skipped, so that it attaches no sources jar of its own; Maven 3.10 has no such
+             profile -->
+        <maven.source.skip>true</maven.source.skip>
+        <!-- the best practices of maven-gpg-plugin: the passphrase of the signing key comes from gpg-agent (or from
+             MAVEN_GPG_PASSPHRASE), not from a server of the settings, see the profile sign-artifacts -->
+        <gpg.bestPractices>true</gpg.bestPractices>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <compilerArgs>
+                        <arg>-Xlint:all</arg>
+                        <!-- JDK 21+ reports Java 8 as an obsolete target; Java 8 stays the target of the library -->
+                        <arg>-Xlint:-options</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+            <plugin>
+                <!-- the sources of the sources jar, which mirrors the multi-release jar: those of src/main/java at the
+                     root, those of src/main/java9 in META-INF/versions/9 (copied in the profile release-8-on-jdk9+,
+                     which compiles them). maven-source-plugin takes the source roots of the project, and src/main/java9
+                     is compiled by an execution of its own, not as a source root -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-sources</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/sources</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/src/main/java</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration>
+                    <!-- an undocumented public or protected member fails the build (JDK 17+ reports it) -->
+                    <failOnWarnings>true</failOnWarnings>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <!-- OSGi bundle headers -->
+                <groupId>biz.aQute.bnd</groupId>
+                <artifactId>bnd-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>bnd-process</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <!-- not in target/classes: there its Automatic-Module-Name makes javac take target/classes for the
+                         module when it compiles module-info.java in an incremental build -->
+                    <manifestPath>${project.build.directory}/bnd/MANIFEST.MF</manifestPath>
+                    <bnd><![CDATA[
+Bundle-SymbolicName: ${javaModuleName}
+Bundle-License: BSD-3-Clause;link="https://opensource.org/licenses/BSD-3-Clause"
+Automatic-Module-Name: ${javaModuleName}
+Multi-Release: true
+Main-Class: com.github.sftwnd.oracle.oiuncomp.OiuncompCommand
+# bnd 6 does not know multi-release jars and takes the module descriptor of META-INF/versions/9 for a misplaced class
+-fixupmessages: "Classes found in the wrong directory: *META-INF/versions/9/*";restrict:=error;is:=ignore
+Export-Package: com.github.sftwnd.oracle.oiuncomp;version="${version;===;${Bundle-Version}}"
+-noextraheaders: true
+# the qualifier SNAPSHOT instead of a timestamp, so that snapshot builds are reproducible as well
+-snapshot: SNAPSHOT
+]]></bnd>
+                </configuration>
+            </plugin>
+            <plugin>
+                <!-- on JDK 9+ the plugin updates a jar with a module descriptor by the jdk jar tool, which records the
+                     Main-Class of the manifest as the main class of the module (ModuleMainClass): the module runs
+                     with java -p <jar> -m <module>, without the name of the class -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifestFile>${project.build.directory}/bnd/MANIFEST.MF</manifestFile>
+                    </archive>
+                </configuration>
+                <executions>
+                    <execution>
+                        <!-- the sources jar of the sources copied by maven-resources-plugin -->
+                        <id>attach-sources</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <classifier>sources</classifier>
+                            <classesDirectory>${project.build.directory}/sources</classesDirectory>
+                            <!-- the default manifest, not that of the bundle -->
+                            <archive combine.self="override" />
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <!-- the distribution of the command-line utility, <artifactId>-<version>-bin.zip and .tar.gz: launchers
+                     in bin, the jar in lib; attached to the project with the classifier bin -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>bin</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>${project.basedir}/src/main/assembly/bin.xml</descriptor>
+                            </descriptors>
+                            <tarLongFileMode>posix</tarLongFileMode>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <systemPropertyVariables>
+                        <oiuncomp.samples>${oiuncomp.samples}</oiuncomp.samples>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+            <plugin>
+                <!-- checks of the built artifacts: the bundle headers, the module descriptor, running with -jar and on
+                     the module path, the layout of the sources jar, of the distribution and its launcher -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <configuration>
+                    <systemPropertyVariables>
+                        <oiuncomp.jar>${project.build.directory}/${project.build.finalName}.jar</oiuncomp.jar>
+                        <oiuncomp.sources>
+                            ${project.build.directory}/${project.build.finalName}-sources.jar
+                        </oiuncomp.sources>
+                        <oiuncomp.module>${javaModuleName}</oiuncomp.module>
+                        <oiuncomp.dist>${project.build.directory}/${project.build.finalName}-bin</oiuncomp.dist>
+                        <oiuncomp.dist.base>${project.build.finalName}</oiuncomp.dist.base>
+                    </systemPropertyVariables>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <!-- the coverage of the unit and integration tests for the SonarCloud analysis: prepare-agent sets
+                     argLine of surefire and failsafe, report writes target/site/jacoco/jacoco.xml in verify -->
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <configuration>
+                    <mavenExecutorId>forked-path</mavenExecutorId>
+                    <!-- the release profile of the super POM is not used: useReleaseProfile (deprecated) is false by
+                         default -->
+                    <releaseProfiles>sign-artifacts</releaseProfiles>
+                </configuration>
+            </plugin>
+            <plugin>
+                <!-- deploy publishes to the Central Publisher Portal (server id "central" with a Portal user token in
+                     .mvn/settings.xml) -->
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <publishingServerId>central</publishingServerId>
+                    <deploymentName>${project.artifactId}-${project.version}</deploymentName>
+                </configuration>
+            </plugin>
+        </plugins>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${maven-compiler-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <!-- the version of the default lifecycle, whose execution the extension of central-publishing
+                         removes, and of the release profile of the super POM of Maven 3.9 (-DperformRelease=true) -->
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>${maven-deploy-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <!-- skipped (maven.source.skip); the version for the release profile of the super POM of
+                         Maven 3.9 -->
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>${maven-source-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>${maven-resources-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>${maven-javadoc-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>${maven-surefire-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>${maven-failsafe-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>${maven-jar-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>${maven-assembly-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-release-plugin</artifactId>
+                    <version>${maven-release-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>biz.aQute.bnd</groupId>
+                    <artifactId>bnd-maven-plugin</artifactId>
+                    <version>${bnd-maven-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.sonatype.central</groupId>
+                    <artifactId>central-publishing-maven-plugin</artifactId>
+                    <version>${central-publishing-maven-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>${jacoco-maven-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <!-- SonarCloud analysis in the GitHub Actions workflow -->
+                    <groupId>org.sonarsource.scanner.maven</groupId>
+                    <artifactId>sonar-maven-plugin</artifactId>
+                    <version>${sonar-maven-plugin.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-api</artifactId>
+                <version>${junit.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-params</artifactId>
+                <version>${junit.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-engine</artifactId>
+                <version>${junit.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <profiles>
+        <profile>
+            <!-- on JDK 9+ the code is checked against the Java 8 API (-source/-target alone do not check it), and the
+                 module descriptor is compiled for Java 9 into META-INF/versions/9: on Java 9+ the library is a named
+                 module, while Java 8 does not see it. A build on JDK 8 produces a jar without the descriptor -->
+            <id>release-8-on-jdk9+</id>
+            <activation>
+                <jdk>[9,)</jdk>
+            </activation>
+            <properties>
+                <maven.compiler.release>8</maven.compiler.release>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>compile-module-info</id>
+                                <goals>
+                                    <goal>compile</goal>
+                                </goals>
+                                <configuration>
+                                    <release>9</release>
+                                    <multiReleaseOutput>true</multiReleaseOutput>
+                                    <compileSourceRoots>
+                                        <compileSourceRoot>${project.basedir}/src/main/java9</compileSourceRoot>
+                                    </compileSourceRoots>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <!-- the sources of src/main/java9 in the sources jar, in META-INF/versions/9 as their classes
+                             in the jar -->
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>copy-sources-9</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>
+                                        ${project.build.directory}/sources/META-INF/versions/9
+                                    </outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>${project.basedir}/src/main/java9</directory>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>sign-artifacts</id>
+            <activation>
+                <property>
+                    <name>performRelease</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <!-- a jar built on JDK 8 has no module descriptor -->
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-enforcer-plugin</artifactId>
+                        <version>${maven-enforcer-plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>release-on-jdk9+</id>
+                                <goals>
+                                    <goal>enforce</goal>
+                                </goals>
+                                <configuration>
+                                    <rules>
+                                        <requireJavaVersion>
+                                            <version>[9,)</version>
+                                            <message>Release builds need JDK 9+ for the module descriptor</message>
+                                        </requireJavaVersion>
+                                    </rules>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>${maven-gpg-plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                                <!-- the passphrase of the key comes from gpg-agent: before the release unlock the key
+                                     with any signature of gpg outside of the batch mode, so that gpg-agent caches it.
+                                     In batch mode the plugin runs gpg with the pinentry mode "error": a locked key
+                                     fails without a prompt. The best practices (gpg.bestPractices) keep the plugin from
+                                     taking the passphrase of the server gpg.passphrase of .mvn/settings.xml
+                                     (GPG_SIGNING_PASSPHRASE), its default server id: -Dgpg.bestPractices=false takes
+                                     that passphrase instead -->
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>

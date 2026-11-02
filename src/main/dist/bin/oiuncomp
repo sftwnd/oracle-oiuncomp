@@ -1,0 +1,24 @@
+#!/bin/sh
+# Runs oiuncomp: uncompresses files compressed by Oracle Installer.
+# Java 8 or newer is taken from JAVA_HOME, otherwise from PATH; JAVA_OPTS holds options of the JVM.
+
+# The installation directory is bin/.. of the script itself, so symbolic links to the script are followed
+script=$0
+while [ -h "$script" ]; do
+    target=$(ls -ld "$script" | sed 's/^.* -> //')
+    case $target in
+        /*) script=$target ;;
+        *) script=$(dirname "$script")/$target ;;
+    esac
+done
+home=$(cd "$(dirname "$script")/.." && pwd) || exit 1
+
+if [ -n "$JAVA_HOME" ]; then
+    java=$JAVA_HOME/bin/java
+else
+    java=java
+fi
+
+# JAVA_OPTS is split into words on purpose: it may hold several options
+# shellcheck disable=SC2086
+exec "$java" $JAVA_OPTS -jar "$home/lib/oracle-oiuncomp.jar" "$@"
