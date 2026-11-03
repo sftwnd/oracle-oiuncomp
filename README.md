@@ -36,18 +36,18 @@ Maven:
 <dependency>
     <groupId>com.github.sftwnd</groupId>
     <artifactId>oracle-oiuncomp</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
 </dependency>
 ```
 
 Gradle:
 
 ```groovy
-implementation 'com.github.sftwnd:oracle-oiuncomp:1.0.0'
+implementation 'com.github.sftwnd:oracle-oiuncomp:1.0.1'
 ```
 
-The distribution of the command-line utility, `oracle-oiuncomp-1.0.0-bin.tar.gz` or `oracle-oiuncomp-1.0.0-bin.zip`,
-is attached to the [GitHub release](https://github.com/sftwnd/oracle-oiuncomp/releases/tag/oracle-oiuncomp-1.0.0)
+The distribution of the command-line utility, `oracle-oiuncomp-1.0.1-bin.tar.gz` or `oracle-oiuncomp-1.0.1-bin.zip`,
+is attached to the [GitHub release](https://github.com/sftwnd/oracle-oiuncomp/releases/tag/oracle-oiuncomp-1.0.1)
 and published to Maven Central with the classifier `bin`; see [Distribution](#distribution).
 
 ## Requirements
@@ -79,11 +79,11 @@ After a successful build, the JAR, its sources and Javadoc, and the distribution
 located here:
 
 ```text
-target/oracle-oiuncomp-1.0.0.jar
-target/oracle-oiuncomp-1.0.0-sources.jar
-target/oracle-oiuncomp-1.0.0-javadoc.jar
-target/oracle-oiuncomp-1.0.0-bin.tar.gz
-target/oracle-oiuncomp-1.0.0-bin.zip
+target/oracle-oiuncomp-1.0.1.jar
+target/oracle-oiuncomp-1.0.1-sources.jar
+target/oracle-oiuncomp-1.0.1-javadoc.jar
+target/oracle-oiuncomp-1.0.1-bin.tar.gz
+target/oracle-oiuncomp-1.0.1-bin.zip
 ```
 
 The sources JAR has the layout of the multi-release JAR: the module descriptor source is in `META-INF/versions/9`.
@@ -93,23 +93,25 @@ The sources JAR has the layout of the multi-release JAR: the module descriptor s
 ```text
 usage: oiuncomp [-c | -d <directory>] [-f] <file_>...
   -c              write the uncompressed data to the standard output
-  -d <directory>  write the files to <directory> instead of the directory of each file
+  -d <directory>  write the files to <directory> instead of the directory of each file,
+                  creating it if missing
   -f              overwrite existing files
   -h, --help      print this help
 ```
 
 The uncompressed file gets the name without the trailing underscore and is created next to the compressed file
-or in the `-d` directory. The compressed file is kept. An existing file is overwritten only with `-f`; a partially
-written file is removed. An error in one file does not stop the others. Exit codes: `0` — all files are
-uncompressed, `1` — some files failed, `2` — invalid arguments.
+or in the `-d` directory. A missing `-d` directory is created with its parents, as `mkdir -p` does; if it cannot be
+created, no file is processed. The compressed file is kept. An existing file is overwritten only with `-f`; a
+partially written file is removed. An error in one file does not stop the others. Exit codes: `0` — all files are
+uncompressed, `1` — some files failed or the `-d` directory cannot be created, `2` — invalid arguments.
 
 ### Distribution
 
-The distribution of the utility, `oracle-oiuncomp-1.0.0-bin.tar.gz` or
-`oracle-oiuncomp-1.0.0-bin.zip`, contains:
+The distribution of the utility, `oracle-oiuncomp-1.0.1-bin.tar.gz` or
+`oracle-oiuncomp-1.0.1-bin.zip`, contains:
 
 ```text
-oracle-oiuncomp-1.0.0/
+oracle-oiuncomp-1.0.1/
 ├── bin/oiuncomp              the launcher for Unix
 ├── bin/oiuncomp.cmd          the launcher for Windows
 ├── lib/oracle-oiuncomp.jar
@@ -121,8 +123,8 @@ oracle-oiuncomp-1.0.0/
 Unpack it anywhere, then add `bin` to `PATH` or link the launcher from a directory of `PATH`:
 
 ```bash
-tar xzf oracle-oiuncomp-1.0.0-bin.tar.gz -C /opt
-ln -s /opt/oracle-oiuncomp-1.0.0/bin/oiuncomp /usr/local/bin/oiuncomp
+tar xzf oracle-oiuncomp-1.0.1-bin.tar.gz -C /opt
+ln -s /opt/oracle-oiuncomp-1.0.1/bin/oiuncomp /usr/local/bin/oiuncomp
 
 oiuncomp dbmsalrt.sql_
 find . -name '*_' -exec oiuncomp {} +
@@ -135,13 +137,13 @@ some unzip tools.
 ### Running the JAR
 
 ```bash
-java -jar oracle-oiuncomp-1.0.0.jar dbmsalrt.sql_
+java -jar oracle-oiuncomp-1.0.1.jar dbmsalrt.sql_
 ```
 
 On Java 9+ the JAR also runs as a module; the module descriptor names the main class:
 
 ```bash
-java -p oracle-oiuncomp-1.0.0.jar -m com.github.sftwnd.oracle.oiuncomp dbmsalrt.sql_
+java -p oracle-oiuncomp-1.0.1.jar -m com.github.sftwnd.oracle.oiuncomp dbmsalrt.sql_
 ```
 
 ## Library

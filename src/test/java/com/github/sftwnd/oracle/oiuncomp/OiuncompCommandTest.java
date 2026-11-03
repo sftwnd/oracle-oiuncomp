@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.abort;
 
 class OiuncompCommandTest {
 
@@ -42,6 +43,46 @@ class OiuncompCommandTest {
         assertEquals(OiuncompCommand.SUCCESS, run("-d", target.toString(), source.toString()));
         assertArrayEquals(DATA, Files.readAllBytes(target.resolve("demo.sql")));
         assertFalse(Files.exists(directory.resolve("demo.sql")));
+    }
+
+    @Test
+    void createsMissingDirectoryWithParents() throws IOException {
+        Path source = compressed("demo.sql_", DATA);
+        Path target = directory.resolve("out").resolve("sql");
+        assertEquals(OiuncompCommand.SUCCESS, run("-d", target.toString(), source.toString()));
+        assertArrayEquals(DATA, Files.readAllBytes(target.resolve("demo.sql")));
+        assertEquals("", err());
+    }
+
+    @Test
+    void writesToSymbolicLinkToDirectory() throws IOException {
+        Path source = compressed("demo.sql_", DATA);
+        Path target = Files.createDirectory(directory.resolve("out"));
+        Path link = directory.resolve("link");
+        try {
+            Files.createSymbolicLink(link, target);
+        } catch (UnsupportedOperationException | IOException e) {
+            abort("symbolic links are not available: " + e);
+        }
+        assertEquals(OiuncompCommand.SUCCESS, run("-d", link.toString(), source.toString()));
+        assertArrayEquals(DATA, Files.readAllBytes(target.resolve("demo.sql")));
+        assertEquals("", err());
+    }
+
+    @Test
+    void directoryThatCannotBeCreatedStopsAllFiles() throws IOException {
+        Path source = compressed("demo.sql_", DATA);
+        Path file = Files.write(directory.resolve("out"), TestData.ascii("file"));
+        assertEquals(OiuncompCommand.FAILURE, run("-d", file.toString(), source.toString()));
+        // The only message: the file is not processed
+        assertEquals("oiuncomp: " + file + ": cannot create the directory: " + file + " is not a directory",
+                err().trim());
+        err.reset();
+
+        Path below = file.resolve("sql");
+        assertEquals(OiuncompCommand.FAILURE, run("-d", below.toString(), source.toString()));
+        assertTrue(err().startsWith("oiuncomp: " + below + ": cannot create the directory: "), err());
+        assertFalse(err().contains(source.toString()), err());
     }
 
     @Test

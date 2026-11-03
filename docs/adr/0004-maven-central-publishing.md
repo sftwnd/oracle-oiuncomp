@@ -27,6 +27,15 @@ The JAR is a multi-release JAR with the module descriptor in `META-INF/versions/
 - A release is made by `maven-release-plugin` (`release:prepare`, `release:perform`) with the `forked-path` executor.
   `release:prepare` sets `project.build.outputTimestamp` to the time of the release, tags
   `oracle-oiuncomp-<version>` and moves to the next snapshot version.
+- `master` holds the last release, `develop` the next snapshot version. The release plugin does not push
+  (`pushChanges` is `false`), and a release goes on JDK 9+ as follows:
+  1. `develop` is merged into `master` with `git merge --no-ff`;
+  2. on `master`: `./mvnw -B release:prepare -DreleaseVersion=<version> -DdevelopmentVersion=<next version>-SNAPSHOT`,
+     two local commits: the release with its tag and the next snapshot version;
+  3. `git switch develop` and `git merge --no-ff master`: `develop` takes the next snapshot version;
+  4. `git switch master` and `git reset --hard oracle-oiuncomp-<version>`: `master` returns to the release;
+  5. `git push origin master develop oracle-oiuncomp-<version>`;
+  6. `./mvnw -B release:perform` checks out the tag from GitHub, builds, signs and uploads it.
 - The profile `sign-artifacts` is activated by the release plugin (`releaseProfiles`) or by `-DperformRelease=true`:
   - `maven-enforcer-plugin` requires JDK 9+;
   - `maven-gpg-plugin` signs all the artifacts in the `verify` phase with the key `gpg.keyname` of `.mvn/settings.xml`;
@@ -51,6 +60,10 @@ The JAR is a multi-release JAR with the module descriptor in `META-INF/versions/
   practices of `maven-gpg-plugin` 3.2 recommend. In batch mode a locked key fails at once instead of hanging on a
   prompt.
 - The enforcer turns a silent loss of the module descriptor into a failed build.
+- `master` is the branch GitHub shows and clones by default: with the last release in it, its sources are those of
+  the artifacts in Maven Central. The release plugin commits the next snapshot version to the branch it runs on, so
+  `develop` takes that commit before `master` returns to the tag, and without the push of the plugin the commit never
+  reaches `master` on GitHub.
 - The Central Publisher Portal is the supported way to publish to Maven Central, and its plugin needs no staging
   configuration in the POM.
 
@@ -63,6 +76,10 @@ The JAR is a multi-release JAR with the module descriptor in `META-INF/versions/
   fallback; by default the secret stays in gpg-agent.
 - **`maven-deploy-plugin` to OSSRH.** The service is shut down.
 - **JReleaser.** One more tool with a configuration of its own; for one module the Maven plugins are enough.
+- **`gitflow-maven-plugin`.** Makes the merges of a release itself, but brings branch conventions and goals of its
+  own; three Git commands around `maven-release-plugin` give the same result.
+- **The next snapshot version on `master` as well.** The default of the release plugin: `master` would point to an
+  unreleased version between releases.
 - **GitHub Packages or GitHub Releases only.** GitHub Packages require authentication even to download, and neither
   is a default repository of Maven or Gradle.
 
