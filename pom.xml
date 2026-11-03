@@ -4,7 +4,7 @@
 
     <groupId>com.github.sftwnd</groupId>
     <artifactId>oracle-oiuncomp</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.0.2-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>Oracle oiuncomp</name>
@@ -41,7 +41,7 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <!-- the time of the entries of the jars, for reproducible builds: maven-release-plugin sets the time of the
              release at release:prepare; without the property the super POM of Maven 3.10 sets 1980-02-01 -->
-        <project.build.outputTimestamp>2026-11-02T14:55:39Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2026-11-03T11:16:29Z</project.build.outputTimestamp>
         <javaModuleName>com.github.sftwnd.oracle.oiuncomp</javaModuleName>
         <!-- real compressed files for SampleFilesTest (a file or a directory), not part of the project; empty means
              that the check is skipped: -Doiuncomp.samples=... -->
