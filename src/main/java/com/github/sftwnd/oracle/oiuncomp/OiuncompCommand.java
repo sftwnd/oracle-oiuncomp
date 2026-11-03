@@ -24,7 +24,8 @@ import java.util.Objects;
  * <p>
  * Compressed files of Oracle distributions are marked with {@code _} at the end of the name. The uncompressed file
  * gets the name without it and is created next to the compressed file or in the {@code -d} directory; the compressed
- * file is kept. An existing file is overwritten only with {@code -f}, and a partially written result is removed. With
+ * file is kept. A missing {@code -d} directory is created with its parents; if it cannot be created, no file is
+ * processed. An existing file is overwritten only with {@code -f}, and a partially written result is removed. With
  * {@code -c} the data goes to the standard output. An error in one file does not stop the processing of the others.
  */
 public final class OiuncompCommand {
@@ -42,7 +43,8 @@ public final class OiuncompCommand {
             "usage: " + NAME + " [-c | -d <directory>] [-f] <file_>...",
             "Uncompresses files compressed by Oracle Installer (their names end with '" + SUFFIX + "').",
             "  -c              write the uncompressed data to the standard output",
-            "  -d <directory>  write the files to <directory> instead of the directory of each file",
+            "  -d <directory>  write the files to <directory> instead of the directory of each file,",
+            "                  creating it if missing",
             "  -f              overwrite existing files",
             "  -h, --help      print this help",
             "");
@@ -83,6 +85,9 @@ public final class OiuncompCommand {
             out.print(USAGE);
             return SUCCESS;
         }
+        if (options.directory != null && !createDirectory(options.directory)) {
+            return FAILURE;
+        }
         int status = SUCCESS;
         for (String file : options.files) {
             if (!uncompress(file, options)) {
@@ -95,6 +100,24 @@ public final class OiuncompCommand {
             status = FAILURE;
         }
         return status;
+    }
+
+    /** Creates the {@code -d} directory with its parents, as {@code mkdir -p}; reports the failure. */
+    private boolean createDirectory(Path directory) {
+        // Checked first: on Java 8 createDirectories fails on a symbolic link to a directory
+        if (Files.isDirectory(directory)) {
+            return true;
+        }
+        try {
+            Files.createDirectories(directory);
+            return true;
+        } catch (IOException e) {
+            String reason = e instanceof FileAlreadyExistsException
+                    ? ((FileAlreadyExistsException) e).getFile() + " is not a directory"
+                    : describe(e);
+            report(directory.toString(), "cannot create the directory: " + reason);
+            return false;
+        }
     }
 
     private boolean uncompress(String file, Options options) {

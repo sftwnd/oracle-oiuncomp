@@ -93,15 +93,17 @@ The sources JAR has the layout of the multi-release JAR: the module descriptor s
 ```text
 usage: oiuncomp [-c | -d <directory>] [-f] <file_>...
   -c              write the uncompressed data to the standard output
-  -d <directory>  write the files to <directory> instead of the directory of each file
+  -d <directory>  write the files to <directory> instead of the directory of each file,
+                  creating it if missing
   -f              overwrite existing files
   -h, --help      print this help
 ```
 
 The uncompressed file gets the name without the trailing underscore and is created next to the compressed file
-or in the `-d` directory. The compressed file is kept. An existing file is overwritten only with `-f`; a partially
-written file is removed. An error in one file does not stop the others. Exit codes: `0` — all files are
-uncompressed, `1` — some files failed, `2` — invalid arguments.
+or in the `-d` directory. A missing `-d` directory is created with its parents, as `mkdir -p` does; if it cannot be
+created, no file is processed. The compressed file is kept. An existing file is overwritten only with `-f`; a
+partially written file is removed. An error in one file does not stop the others. Exit codes: `0` — all files are
+uncompressed, `1` — some files failed or the `-d` directory cannot be created, `2` — invalid arguments.
 
 ### Distribution
 
