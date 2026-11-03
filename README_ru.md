@@ -37,18 +37,18 @@ Maven:
 <dependency>
     <groupId>com.github.sftwnd</groupId>
     <artifactId>oracle-oiuncomp</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
 </dependency>
 ```
 
 Gradle:
 
 ```groovy
-implementation 'com.github.sftwnd:oracle-oiuncomp:1.0.0'
+implementation 'com.github.sftwnd:oracle-oiuncomp:1.0.1'
 ```
 
-Дистрибутив утилиты командной строки, `oracle-oiuncomp-1.0.0-bin.tar.gz` или `oracle-oiuncomp-1.0.0-bin.zip`,
-приложен к [релизу на GitHub](https://github.com/sftwnd/oracle-oiuncomp/releases/tag/oracle-oiuncomp-1.0.0) и
+Дистрибутив утилиты командной строки, `oracle-oiuncomp-1.0.1-bin.tar.gz` или `oracle-oiuncomp-1.0.1-bin.zip`,
+приложен к [релизу на GitHub](https://github.com/sftwnd/oracle-oiuncomp/releases/tag/oracle-oiuncomp-1.0.1) и
 опубликован в Maven Central с классификатором `bin`; см. [Дистрибутив](#дистрибутив).
 
 ## Требования
@@ -79,11 +79,11 @@ Wrapper берёт настройки проекта, `.mvn/settings.xml`, из 
 После успешной сборки JAR, его исходники и Javadoc, а также дистрибутив утилиты командной строки находятся здесь:
 
 ```text
-target/oracle-oiuncomp-1.0.0.jar
-target/oracle-oiuncomp-1.0.0-sources.jar
-target/oracle-oiuncomp-1.0.0-javadoc.jar
-target/oracle-oiuncomp-1.0.0-bin.tar.gz
-target/oracle-oiuncomp-1.0.0-bin.zip
+target/oracle-oiuncomp-1.0.1.jar
+target/oracle-oiuncomp-1.0.1-sources.jar
+target/oracle-oiuncomp-1.0.1-javadoc.jar
+target/oracle-oiuncomp-1.0.1-bin.tar.gz
+target/oracle-oiuncomp-1.0.1-bin.zip
 ```
 
 JAR исходников повторяет раскладку multi-release JAR: исходник дескриптора модуля — в `META-INF/versions/9`.
@@ -107,10 +107,10 @@ usage: oiuncomp [-c | -d <directory>] [-f] <file_>...
 
 ### Дистрибутив
 
-Дистрибутив утилиты, `oracle-oiuncomp-1.0.0-bin.tar.gz` или `oracle-oiuncomp-1.0.0-bin.zip`, содержит:
+Дистрибутив утилиты, `oracle-oiuncomp-1.0.1-bin.tar.gz` или `oracle-oiuncomp-1.0.1-bin.zip`, содержит:
 
 ```text
-oracle-oiuncomp-1.0.0/
+oracle-oiuncomp-1.0.1/
 ├── bin/oiuncomp              запуск в Unix
 ├── bin/oiuncomp.cmd          запуск в Windows
 ├── lib/oracle-oiuncomp.jar
@@ -123,8 +123,8 @@ oracle-oiuncomp-1.0.0/
 входящего в `PATH`:
 
 ```bash
-tar xzf oracle-oiuncomp-1.0.0-bin.tar.gz -C /opt
-ln -s /opt/oracle-oiuncomp-1.0.0/bin/oiuncomp /usr/local/bin/oiuncomp
+tar xzf oracle-oiuncomp-1.0.1-bin.tar.gz -C /opt
+ln -s /opt/oracle-oiuncomp-1.0.1/bin/oiuncomp /usr/local/bin/oiuncomp
 
 oiuncomp dbmsalrt.sql_
 find . -name '*_' -exec oiuncomp {} +
@@ -137,13 +137,13 @@ find . -name '*_' -exec oiuncomp {} +
 ### Запуск JAR
 
 ```bash
-java -jar oracle-oiuncomp-1.0.0.jar dbmsalrt.sql_
+java -jar oracle-oiuncomp-1.0.1.jar dbmsalrt.sql_
 ```
 
 На Java 9+ JAR запускается и как модуль; основной класс указан в дескрипторе модуля:
 
 ```bash
-java -p oracle-oiuncomp-1.0.0.jar -m com.github.sftwnd.oracle.oiuncomp dbmsalrt.sql_
+java -p oracle-oiuncomp-1.0.1.jar -m com.github.sftwnd.oracle.oiuncomp dbmsalrt.sql_
 ```
 
 ## Библиотека
